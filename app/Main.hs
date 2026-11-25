@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Main where
 
@@ -15,11 +16,20 @@ import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Lazy as BL
 import Data.Functor (void)
 import qualified Data.ByteString.Lazy as LBS
+import Database.PostgreSQL.Simple.Types (PGArray(..))
+import Data.Text (Text)
+import qualified Data.Text as T
+import qualified Data.Text.Encoding as TE
+import qualified Data.ByteString as B
+import Database.PostgreSQL.Simple.TypeInfo.Static (typoid, uuid)
 
 --  системное окружение 
 import System.Environment (lookupEnv)
 import Data.Maybe (fromMaybe)
 
+import Database.PostgreSQL.Simple.FromField
+    ( FromField(..), typeOid, returnError, ResultError(..) )
+import Database.PostgreSQL.Simple.TypeInfo.Static (typoid, uuid)
 
 {-|
 Module      : Main
@@ -69,6 +79,14 @@ measureTime action = do
 callProcedureRow :: PG.Connection -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> Int32 -> IO ()
 callProcedureRow conn a b c d e f = do
         void $ PG.execute conn "CALL insert_tbloom2_row(?, ?, ?, ?, ?, ?)" (a, b, c, d, e, f)
+
+
+studentSelectAction :: PG.Connection -> [Text] -> IO [(Text, Text)]
+studentSelectAction conn names
+    | null names = pure []
+    | otherwise  = PG.query conn
+        "select id::text, name from students where name = ANY(?)"
+        (PG.Only (PGArray names))
 
 callInsertBatch :: PG.Connection -> [(Int32, Int32, Int32, Int32, Int32, Int32)] -> IO ()
 callInsertBatch conn rows = do   
@@ -175,6 +193,10 @@ main = do
         _ <- PG.execute_ conn "SET client_min_messages = WARNING"
         -- вставим - 10 записей в пакете по - 5 штук
         insertBatch conn 10 5
+        -- students <- studentSelectAction conn ["sveta", "galia"]
+        students <- studentSelectAction conn (["sveta", "galia"] :: [Text])
+        mapM_ (\(sid, sname) ->
+            putStrLn $ show sid ++ ": " ++ T.unpack sname) students
         end <- getCurrentTime  
         let elapsed = diffUTCTime end startTime
         putStrLn $ "\n Program execution time: " ++ show elapsed
