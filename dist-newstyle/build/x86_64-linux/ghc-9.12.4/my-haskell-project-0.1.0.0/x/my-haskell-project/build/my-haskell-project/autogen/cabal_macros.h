@@ -90,6 +90,16 @@
   (major1) == 1 && (major2) <  14 || \
   (major1) == 1 && (major2) == 14 && (minor) <= 0)
 #endif /* MIN_VERSION_time */
+/* package uuid-1.3.16.1 */
+#ifndef VERSION_uuid
+#define VERSION_uuid "1.3.16.1"
+#endif /* VERSION_uuid */
+#ifndef MIN_VERSION_uuid
+#define MIN_VERSION_uuid(major1,major2,minor) (\
+  (major1) <  1 || \
+  (major1) == 1 && (major2) <  3 || \
+  (major1) == 1 && (major2) == 3 && (minor) <= 16)
+#endif /* MIN_VERSION_uuid */
 
 /* tool gcc-14.1.0 */
 #ifndef TOOL_VERSION_gcc

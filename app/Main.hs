@@ -22,13 +22,14 @@ import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.ByteString as B
 import Database.PostgreSQL.Simple.TypeInfo.Static (typoid, uuid)
+import qualified Data.UUID as UUID
 
 --  системное окружение 
 import System.Environment (lookupEnv)
 import Data.Maybe (fromMaybe)
 
 import Database.PostgreSQL.Simple.FromField
-    ( FromField(..), typeOid, returnError, ResultError(..) )
+    (FromField(..), Field, Conversion, typeOid, returnError, ResultError(..) )
 import Database.PostgreSQL.Simple.TypeInfo.Static (typoid, uuid)
 
 {-|
@@ -196,7 +197,8 @@ main = do
         -- students <- studentSelectAction conn ["sveta", "galia"]
         students <- studentSelectAction conn (["sveta", "galia"] :: [Text])
         mapM_ (\(sid, sname) ->
-            putStrLn $ show sid ++ ": " ++ T.unpack sname) students
+           putStrLn $ show sid ++ ": " ++ T.unpack sname) students
+
         end <- getCurrentTime  
         let elapsed = diffUTCTime end startTime
         putStrLn $ "\n Program execution time: " ++ show elapsed
