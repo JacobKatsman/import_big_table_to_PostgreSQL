@@ -13,7 +13,9 @@ import qualified Database.PostgreSQL.Simple.Copy as PGCopy
 import qualified Data.ByteString.Builder as BB
 import qualified Data.ByteString.Lazy as BL
 import Data.Functor (void)
-import qualified Data.ByteString.Lazy as LBS 
+import qualified Data.ByteString.Lazy as LBS
+
+--  системное окружение 
 import System.Environment (lookupEnv)
 import Data.Maybe (fromMaybe)
 
@@ -36,6 +38,11 @@ Portability : POSIX/Linux
      Ru: Очень Быстрое заполнение большой (1 миллион записей) таблицы в posgreSQL
      случайными данными с левосторонним нормальным распределением.
      Может использоваться как паттерн для Ваших импортов.
+     *Не забывайте прописать .env
+       - никаких пробелов в значениях — DB_PASS=my pass сломается
+       - никаких комментариев # — xargs передаст их в export и будет ошибка export: '#': not a valid identifier
+       - никаких кавычек без нужды — DB_PASS="secret" даст значение с кавычками внутри
+       - никаких пустых строк между парами с содержимым — обычно ок, но лучше не рисковать
 
      Использование(uses):
      $ cabal build --ghc-options="-w"
@@ -87,6 +94,7 @@ callInsertBatchFast conn rows = do
 gRInRange :: (Random a) => (a, a) -> IO a
 gRInRange range = getStdRandom (randomR range)
 
+-- мы генерируем поля нашего столбца
 generateRow :: IO (Int32, Int32, Int32, Int32, Int32, Int32)
 generateRow = do
     -- должно что-то делаться...
@@ -119,7 +127,8 @@ generateLeftSkewed mean std = do
     let skewness = -1.0  -- степень скошенности
     let skewed = mean + std * (z - skewness * (z^2 - 1) / 3)
     return skewed
-
+    
+-- здесь мы прорисовывает прогресс бар
 progressBar :: Int -> Int -> Int -> String
 progressBar batchNum  batchSize totalRows = 
         let inserted = min (batchNum * batchSize) totalRows
@@ -136,8 +145,9 @@ insertBatch conn totalRows batchSize = do
     let batches = (totalRows + batchSize - 1) `div` batchSize
     forM_ [1..batches] $ \batchNum -> do
         let currentBatch = min batchSize (totalRows - (batchNum - 1) * batchSize)
+        -- формируем наш набор столбцов 
         rows <- replicateM currentBatch generateRow
-        
+        -- здесь мы вставляем через callInsertBatchFast для сoединения conn            
         PG.withTransaction conn $ do
            callInsertBatchFast conn rows
            
@@ -161,7 +171,8 @@ main = do
     bracket (PG.connect connectInfo) PG.close $ \conn -> do
         startTime <- getCurrentTime 
         _ <- PG.execute_ conn "SET client_min_messages = WARNING"
-        insertBatch conn 1000000 20000
+        -- вставим - 10 записей в пакете по - 5 штук
+        insertBatch conn 10 5
         end <- getCurrentTime  
         let elapsed = diffUTCTime end startTime
         putStrLn $ "\n Program execution time: " ++ show elapsed
