@@ -7,6 +7,7 @@ import Control.Exception (bracket)
 import Data.Int (Int32)
 import System.Random
 import Control.Monad
+import Configuration.Dotenv (loadFile, defaultConfig)
 import Data.Time.Clock (getCurrentTime, diffUTCTime)
 import System.IO (hFlush, stdout)
 import qualified Database.PostgreSQL.Simple.Copy as PGCopy
@@ -156,6 +157,7 @@ insertBatch conn totalRows batchSize = do
 
 main :: IO ()
 main = do
+    loadFile defaultConfig          -- читает ./.env, не перезатирая уже заданные
     dbHost <- fromMaybe "localhost" <$> lookupEnv "DB_HOST"
     dbName <- fromMaybe "postgres"  <$> lookupEnv "DB_NAME"
     dbUser <- fromMaybe "postgres"  <$> lookupEnv "DB_USER"

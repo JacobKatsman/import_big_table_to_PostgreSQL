@@ -40,6 +40,16 @@
   (major1) == 0 && (major2) <  12 || \
   (major1) == 0 && (major2) == 12 && (minor) <= 2)
 #endif /* MIN_VERSION_bytestring */
+/* package dotenv-0.12.0.0 */
+#ifndef VERSION_dotenv
+#define VERSION_dotenv "0.12.0.0"
+#endif /* VERSION_dotenv */
+#ifndef MIN_VERSION_dotenv
+#define MIN_VERSION_dotenv(major1,major2,minor) (\
+  (major1) <  0 || \
+  (major1) == 0 && (major2) <  12 || \
+  (major1) == 0 && (major2) == 12 && (minor) <= 0)
+#endif /* MIN_VERSION_dotenv */
 /* package postgresql-simple-0.7.0.1 */
 #ifndef VERSION_postgresql_simple
 #define VERSION_postgresql_simple "0.7.0.1"
